@@ -1,3 +1,37 @@
+# name: Share data between jobs
+# on: push
+# jobs:
+#   job_1:
+#     name: Upload File
+#     runs-on: ubuntu-latest
+#     steps:
+#       - run: echo "Hello World" > file.txt
+#       - uses: actions/upload-artifact@v2
+#         with:
+#           name: file
+#           path: file.txt
+#       - name: Create Release
+#         id: create_release
+#         uses: actions/create-release@v1
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         with:
+#           tag_name: ${{ github.sha }}
+#           release_name: Release ${{ github.sha }}
+#           draft: false
+#           prerelease: false
+#           body: Release ${{ github.sha }}
+#           asset_paths: file.txt
+          
+# job_2:
+#   name: Download File
+#   runs-on: ubuntu-latest
+#   needs: job_1
+#   steps:
+#     - uses: actions/download-artifact@v2
+#       with:
+#         name: file
+#     - run: cat file.txt
 name: Share data between jobs
 on: push
 jobs:
@@ -5,30 +39,27 @@ jobs:
     name: Upload File
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Hello World" > file.txt
-      - uses: actions/upload-artifact@v2
+      - name: Create Artifact Directory
+        run: mkdir -p artifacts
+
+      - name: Create File
+        run: echo "Hello World" > artifacts/file.txt
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
         with:
-          name: file
-          path: file.txt
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: artifacts
+          path: artifacts
+
+  job_2:
+    name: Download and Use File
+    runs-on: ubuntu-latest
+    needs: job_1
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v2
         with:
-          tag_name: ${{ github.sha }}
-          release_name: Release ${{ github.sha }}
-          draft: false
-          prerelease: false
-          body: Release ${{ github.sha }}
-          asset_paths: file.txt
-          
-job_2:
-  name: Download File
-  runs-on: ubuntu-latest
-  needs: job_1
-  steps:
-    - uses: actions/download-artifact@v2
-      with:
-        name: file
-    - run: cat file.txt
+          name: artifacts
+
+      - name: Display File Content
+        run: cat artifacts/file.txt
