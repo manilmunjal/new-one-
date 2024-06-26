@@ -10,13 +10,25 @@ jobs:
         with:
           name: file
           path: file.txt
-
-  job_2:
-    name: Download File
-    runs-on: ubuntu-latest
-    needs: job_1
-    steps:
-      - uses: actions/download-artifact@v2
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: file
-      - run: cat file.txt
+          tag_name: ${{ github.sha }}
+          release_name: Release ${{ github.sha }}
+          draft: false
+          prerelease: false
+          body: Release ${{ github.sha }}
+          asset_paths: file.txt
+          
+job_2:
+  name: Download File
+  runs-on: ubuntu-latest
+  needs: job_1
+  steps:
+    - uses: actions/download-artifact@v2
+      with:
+        name: file
+    - run: cat file.txt
